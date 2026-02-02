@@ -1,0 +1,14 @@
+{
+    "name": "mcp-auth-playground-proxy",
+    "version": "1.0.0",
+    "description": "Proxy server for MCP Auth Playground",
+    "main": "src/server.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "node --watch src/server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.6",
+        "express": "^5.2.1"
+    }
+}
