@@ -55,6 +55,6 @@ open http://localhost:3002
 
 ## Tech Stack
 
-- **Frontend**: React 18, Vite 5
-- **Proxy**: Node.js 20, Express 4
+- **Frontend**: React 19, Vite 7
+- **Proxy**: Node.js 25, Express 5
 - **Containerization**: Docker, Docker Compose
