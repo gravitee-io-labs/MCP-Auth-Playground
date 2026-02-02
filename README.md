@@ -16,16 +16,26 @@ This educational tool guides you step-by-step through the OAuth 2.1 authenticati
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Docker Compose                           │
-├─────────────────────────┬───────────────────────────────────┤
-│   auth-playground-app   │            proxy                  │
-│   (React + Vite)        │      (Express.js)                 │
-│   Port: 3002            │      Port: 3001                   │
-│                         │                                   │
-│   Northbound Network    │   Northbound + Southbound         │
-└─────────────────────────┴───────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Docker Compose
+        subgraph Northbound Network
+            APP[auth-playground-app<br/>React + Vite<br/>Port: 3002]
+            PROXY[proxy<br/>Express.js<br/>Port: 3001]
+        end
+        subgraph Southbound Network
+            PROXY
+            INTERNAL[Internal MCP Servers]
+        end
+    end
+    
+    EXTERNAL[External MCP Servers<br/>Notion, Figma, etc.]
+    
+    Browser -->|:3002| APP
+    APP -->|Proxy Mode| PROXY
+    APP -.->|Direct Mode| EXTERNAL
+    PROXY -->|Forward| INTERNAL
+    PROXY -->|Forward| EXTERNAL
 ```
 
 - **auth-playground-app**: React frontend with step-by-step OAuth flow visualization
