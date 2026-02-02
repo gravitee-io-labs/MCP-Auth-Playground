@@ -35,11 +35,19 @@ function Step5_Authorization({ state, updateState, setStep }) {
         // Redirect current page to authorization URL
         // Append prompt=login to force re-authentication for demo purposes
         const url = new URL(state.authorizationUrl);
-        // In proxy mode, we need to replace the container hostname with localhost
-        // In direct mode, the URL is already accessible from the browser
-        if (!state.useDirectMode) {
+        
+        // Only replace hostname for internal Docker containers
+        // Internal hostnames typically: no dots (e.g., "apim-gateway") or internal TLDs
+        const hostname = url.hostname;
+        const isInternalHostname = !hostname.includes('.') || 
+            hostname.endsWith('.local') || 
+            hostname.endsWith('.internal') ||
+            hostname.endsWith('.docker');
+        
+        if (isInternalHostname) {
             url.hostname = 'localhost';
         }
+        
         url.searchParams.append('prompt', 'login');
         window.location.href = url.toString();
     };

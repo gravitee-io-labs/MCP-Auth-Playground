@@ -110,12 +110,24 @@ function Step2_MetadataDiscovery({ state, updateState, setStep, addToHistory }) 
         setOauthLoading(true);
 
         // Build the OAuth Authorization Server Metadata URLs
-        // Per RFC 8414, try oauth-authorization-server first, then openid-configuration as fallback
-        const baseUrl = state.authorizationServerUrl.replace(/\/$/, '');
-        const metadataUrls = [
-            `${baseUrl}/.well-known/oauth-authorization-server`,
-            `${baseUrl}/.well-known/openid-configuration`,
-        ];
+        // Per RFC 8414, for URLs with paths like https://example.com/tenant:
+        // - oauth-authorization-server: https://example.com/.well-known/oauth-authorization-server/tenant
+        // - openid-configuration: https://example.com/tenant/.well-known/openid-configuration (legacy)
+        const url = new URL(state.authorizationServerUrl);
+        const origin = url.origin;
+        const path = url.pathname.replace(/\/$/, ''); // Remove trailing slash
+        
+        const metadataUrls = [];
+        
+        // RFC 8414 compliant: path goes AFTER .well-known segment
+        if (path && path !== '/') {
+            metadataUrls.push(`${origin}/.well-known/oauth-authorization-server${path}`);
+        } else {
+            metadataUrls.push(`${origin}/.well-known/oauth-authorization-server`);
+        }
+        
+        // OpenID Connect discovery (legacy format - path before .well-known)
+        metadataUrls.push(`${origin}${path}/.well-known/openid-configuration`);
 
         let successfulResponse = null;
         let lastRequest = null;

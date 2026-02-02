@@ -45,7 +45,23 @@ export async function makeRequest(reqData, useDirectMode = false) {
         }
 
         const startTime = Date.now();
-        const response = await fetch(url, fetchOptions);
+        let response;
+        
+        try {
+            response = await fetch(url, fetchOptions);
+        } catch (fetchError) {
+            // Check if this is likely a CORS error
+            if (fetchError.message === 'Failed to fetch' || fetchError.name === 'TypeError') {
+                const corsError = new Error(
+                    `CORS error: The server at ${new URL(url).origin} doesn't allow direct browser requests. ` +
+                    `Switch to Proxy Mode to access this server.`
+                );
+                corsError.isCorsError = true;
+                throw corsError;
+            }
+            throw fetchError;
+        }
+        
         const duration = Date.now() - startTime;
 
         // Get response headers

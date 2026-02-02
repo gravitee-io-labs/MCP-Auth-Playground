@@ -79,11 +79,17 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
                 const wwwAuth = data.response.headers['www-authenticate'];
                 if (wwwAuth) {
                     // Parse the resource_metadata URL from WWW-Authenticate header
-                    const match = wwwAuth.match(/resource_metadata="([^"]+)"/);
-                    if (match) {
+                    // Handle both quoted and unquoted formats:
+                    // - resource_metadata="https://..." (quoted)
+                    // - resource_metadata=https://... (unquoted)
+                    const quotedMatch = wwwAuth.match(/resource_metadata="([^"]+)"/);
+                    const unquotedMatch = wwwAuth.match(/resource_metadata=([^\s,]+)/);
+                    const metadataUrl = quotedMatch ? quotedMatch[1] : (unquotedMatch ? unquotedMatch[1] : null);
+                    
+                    if (metadataUrl) {
                         updateState({
                             wwwAuthenticate: wwwAuth,
-                            resourceMetadataUrl: match[1],
+                            resourceMetadataUrl: metadataUrl,
                         });
                     } else {
                         updateState({ wwwAuthenticate: wwwAuth });
@@ -298,6 +304,7 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
                     {[
                         { label: 'Gravitee APIM', url: 'http://apim-gateway:8082/mcp-proxy' },
                         { label: 'Notion', url: 'https://mcp.notion.com/mcp' },
+                        { label: 'Stripe', url: 'https://mcp.stripe.com' },
                     ].map((example, idx) => (
                         <button
                             key={idx}
