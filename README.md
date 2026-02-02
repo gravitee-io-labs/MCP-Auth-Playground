@@ -2,6 +2,8 @@
 
 An interactive workshop for learning OAuth 2.1 authentication with Model Context Protocol (MCP) servers.
 
+![MCP Auth Playground](<MCP Auth Playground.png>)
+
 ## Overview
 
 This educational tool guides you step-by-step through the OAuth 2.1 authentication flow required to connect to MCP servers. You'll learn:
