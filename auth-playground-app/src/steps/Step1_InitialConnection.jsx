@@ -305,6 +305,8 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
                         { label: 'Gravitee APIM', url: 'http://apim-gateway:8082/mcp-proxy' },
                         { label: 'Notion', url: 'https://mcp.notion.com/mcp' },
                         { label: 'Stripe', url: 'https://mcp.stripe.com' },
+                        { label: 'Hugging Face', url: 'https://huggingface.co/mcp' },
+                        { label: 'Tavily', url: 'https://mcp.tavily.com/mcp' },
                     ].map((example, idx) => (
                         <button
                             key={idx}
