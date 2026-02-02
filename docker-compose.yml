@@ -1,0 +1,30 @@
+services:
+  auth-playground-app:
+    build: ./auth-playground-app
+    ports:
+      - "3002:3000"
+    environment:
+      - VITE_PROXY_URL=http://localhost:3001
+      - VITE_DEFAULT_MCP_SERVER_URL=${DEFAULT_MCP_SERVER_URL:-}
+    depends_on:
+      - proxy
+    networks:
+      - northbound
+
+  # Proxy Service, used to forward requests from the auth-playground-app to internal services.
+  proxy:
+    build: ./proxy
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+    networks:
+      - northbound
+      - southbound
+
+networks:
+  northbound:
+    name: northbound
+  southbound:
+    name: southbound
