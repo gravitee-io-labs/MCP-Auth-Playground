@@ -68,10 +68,8 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
         setRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setResponse(data.response);
-
-            // We must pass the step ID (1) to addToHistory
             addToHistory(1, { request: reqData, response: data.response });
 
             // Check for 401 with WWW-Authenticate header
@@ -150,12 +148,11 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
             };
 
             try {
-                const data = await makeRequest(reqData, state.useDirectMode);
-                
-                let body = data.response.body;
+                const data = await makeRequest(reqData, state.requestMode);
                 let parsedBody = null;
                 let metadataType = null;
-                
+                const body = data.response.body;
+
                 if (data.response.status === 200 && body) {
                     if (typeof body === 'string') {
                         try { parsedBody = JSON.parse(body); } catch { parsedBody = null; }
@@ -307,6 +304,7 @@ function Step1_InitialConnection({ state, updateState, setStep, addToHistory }) 
                         { label: 'Stripe', url: 'https://mcp.stripe.com' },
                         { label: 'Hugging Face', url: 'https://huggingface.co/mcp' },
                         { label: 'Tavily', url: 'https://mcp.tavily.com/mcp' },
+                        { label: 'Atlassian', url: 'https://mcp.atlassian.com/v1/mcp' },
                     ].map((example, idx) => (
                         <button
                             key={idx}

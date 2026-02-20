@@ -53,9 +53,8 @@ function Step6_TokenRequest({ state, updateState, setStep, addToHistory }) {
         setRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setResponse(data.response);
-
             addToHistory(6, { request: reqData, response: data.response });
 
             if (data.response.status === 200 && data.response.body) {

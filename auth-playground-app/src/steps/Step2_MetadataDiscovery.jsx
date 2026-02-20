@@ -61,10 +61,10 @@ function Step2_MetadataDiscovery({ state, updateState, setStep, addToHistory }) 
         setRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
-            setResponse(data.response);
+            const data = await makeRequest(reqData, state.requestMode);
 
-            addToHistory(2, { type: 'resource_metadata', request: reqData, response: data.response });
+            setResponse(data.response);
+            addToHistory(2, { request: reqData, response: data.response, type: 'resource_metadata' });
 
             if (data.response.status === 200 && data.response.body) {
                 // Parse body if it came as a string (happens when content-type isn't exactly application/json)
@@ -146,7 +146,7 @@ function Step2_MetadataDiscovery({ state, updateState, setStep, addToHistory }) 
             setOauthRequest(reqData);
 
             try {
-                const data = await makeRequest(reqData, state.useDirectMode);
+                const data = await makeRequest(reqData, state.requestMode);
                 lastResponse = data.response;
                 setOauthResponse(data.response);
 

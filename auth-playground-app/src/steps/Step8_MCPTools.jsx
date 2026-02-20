@@ -52,9 +52,8 @@ function Step8_MCPTools({ state, updateState, setStep, addToHistory }) {
         setInitRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setInitResponse(data.response);
-
             addToHistory(8, { request: reqData, response: data.response, type: 'initialize' });
 
             // Extract Mcp-Session-Id from response headers (case-insensitive)
@@ -118,9 +117,8 @@ function Step8_MCPTools({ state, updateState, setStep, addToHistory }) {
         setRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setResponse(data.response);
-
             addToHistory(8, { request: reqData, response: data.response, type: 'list-tools' });
 
             // Handle different response structures
@@ -211,9 +209,8 @@ function Step8_MCPTools({ state, updateState, setStep, addToHistory }) {
         setToolRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setToolResponse(data.response);
-
             addToHistory(8, { request: reqData, response: data.response, type: 'call-tool', tool: selectedTool.name });
 
             if (data.response.status === 200 && data.response.body?.result) {

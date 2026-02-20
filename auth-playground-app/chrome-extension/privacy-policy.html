@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – MCP Auth Playground Local Bridge</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 20px; color: #333; line-height: 1.7; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; }
+    .date { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+    ul { padding-left: 1.5rem; }
+    a { color: #0969da; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="date">MCP Auth Playground – Local Bridge (Chrome Extension)</p>
+  <p class="date">Last updated: February 20, 2026</p>
+
+  <h2>Overview</h2>
+  <p>
+    The <strong>MCP Auth Playground – Local Bridge</strong> Chrome extension is an open-source developer tool
+    that allows the hosted <a href="https://mcp-auth.playground.gravitee.io">MCP Auth Playground</a> web application
+    to communicate with services running on your local machine or Docker network.
+  </p>
+
+  <h2>Data Collection</h2>
+  <p>This extension does <strong>not</strong> collect, store, transmit, or share any personal data or browsing information. Specifically:</p>
+  <ul>
+    <li>No analytics or telemetry of any kind.</li>
+    <li>No cookies or local storage used by the extension itself.</li>
+    <li>No data is sent to any third-party server.</li>
+    <li>No user accounts or sign-in required.</li>
+  </ul>
+
+  <h2>How the Extension Works</h2>
+  <p>
+    The extension acts as a local request bridge. When the MCP Auth Playground web app (running in your browser tab)
+    needs to reach a URL that the browser's same-origin policy would normally block (e.g., <code>localhost</code>),
+    the request is forwarded to the extension's background service worker, which performs the HTTP fetch and returns
+    the response back to the web app.
+  </p>
+  <p>
+    All communication happens entirely within your browser — between the web page and the extension.
+    No data leaves your machine beyond the HTTP requests you explicitly initiate through the playground interface.
+  </p>
+
+  <h2>Host Permissions</h2>
+  <p>
+    The extension requests access to all URLs (<code>&lt;all_urls&gt;</code>) because users may point the playground
+    at any MCP server — local or remote. The extension only makes requests when explicitly triggered by user action
+    in the playground app. It never makes requests on its own.
+  </p>
+
+  <h2>Open Source</h2>
+  <p>
+    The full source code is publicly available at:<br />
+    <a href="https://github.com/gravitee-io/mcp-oauth-flow-workshop/tree/main/auth-playground-app/chrome-extension">
+      github.com/gravitee-io/mcp-oauth-flow-workshop
+    </a>
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    For questions about this privacy policy, please open an issue on the
+    <a href="https://github.com/gravitee-io/mcp-oauth-flow-workshop/issues">GitHub repository</a>.
+  </p>
+</body>
+</html>

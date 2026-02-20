@@ -9,7 +9,7 @@ import Step5_Authorization from './steps/Step5_Authorization';
 import Step6_TokenRequest from './steps/Step6_TokenRequest';
 import Step7_AuthComplete from './steps/Step7_AuthComplete';
 import Step8_MCPTools from './steps/Step8_MCPTools';
-import { checkProxyHealth } from './utils/api';
+import { checkProxyHealth, isExtensionAvailable, onExtensionReady, REQUEST_MODES } from './utils/api';
 
 const STORAGE_KEY = 'mcp-auth-playground-state';
 
@@ -29,8 +29,8 @@ const getInitialState = () => {
     const defaultState = {
         currentStep: 0,
         mcpServerUrl: import.meta.env.VITE_DEFAULT_MCP_SERVER_URL || '',
-        // Request mode: false = proxy (through proxy server), true = direct (browser)
-        useDirectMode: false,
+        // Request mode: 'direct' | 'proxy' | 'extension'
+        requestMode: REQUEST_MODES.PROXY,
         // Step 1 response
         wwwAuthenticate: null,
         resourceMetadataUrl: null,
@@ -66,7 +66,13 @@ const getInitialState = () => {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
-            return { ...defaultState, ...JSON.parse(saved) };
+            const parsed = JSON.parse(saved);
+            // Migrate old useDirectMode boolean → requestMode string
+            if ('useDirectMode' in parsed && !('requestMode' in parsed)) {
+                parsed.requestMode = parsed.useDirectMode ? REQUEST_MODES.DIRECT : REQUEST_MODES.PROXY;
+                delete parsed.useDirectMode;
+            }
+            return { ...defaultState, ...parsed };
         }
     } catch (e) {
         console.warn('Failed to load state from localStorage:', e);
@@ -78,16 +84,51 @@ const getInitialState = () => {
 function App() {
     const [state, setState] = useState(getInitialState);
     const [proxyAvailable, setProxyAvailable] = useState(null); // null = checking, true/false = result
+    const [extensionAvailable, setExtensionAvailable] = useState(false);
+
+    // Detect Chrome extension availability (event + polling for DOM marker)
+    useEffect(() => {
+        const checkNow = () => {
+            const available = isExtensionAvailable();
+            if (available) {
+                setExtensionAvailable(true);
+            }
+            return available;
+        };
+
+        if (checkNow()) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            if (checkNow()) {
+                clearInterval(interval);
+            }
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (!extensionAvailable) {
+            onExtensionReady(() => setExtensionAvailable(true));
+        }
+    }, [extensionAvailable]);
 
     // Check proxy availability on mount and periodically
     useEffect(() => {
         const checkProxy = async () => {
             const available = await checkProxyHealth();
             setProxyAvailable(available);
-            
-            // If proxy becomes unavailable, force direct mode
+
+            // If proxy becomes unavailable and we're in proxy mode, fall back
             if (!available) {
-                setState((prev) => ({ ...prev, useDirectMode: true }));
+                setState((prev) => {
+                    if (prev.requestMode === REQUEST_MODES.PROXY) {
+                        return { ...prev, requestMode: REQUEST_MODES.DIRECT };
+                    }
+                    return prev;
+                });
             }
         };
 
@@ -132,7 +173,7 @@ function App() {
         setState({
             currentStep: 0,
             mcpServerUrl: import.meta.env.VITE_DEFAULT_MCP_SERVER_URL || '',
-            useDirectMode: !proxyAvailable, // Default to direct mode if proxy not available
+            requestMode: proxyAvailable ? REQUEST_MODES.PROXY : (extensionAvailable ? REQUEST_MODES.EXTENSION : REQUEST_MODES.DIRECT),
             wwwAuthenticate: null,
             resourceMetadataUrl: null,
             manualDiscovery: false,
@@ -163,6 +204,7 @@ function App() {
         setStep,
         addToHistory,
         proxyAvailable,
+        extensionAvailable,
     };
 
     const renderStep = () => {
@@ -192,40 +234,28 @@ function App() {
                         </div>
                     </div>
                     {/* Request Mode Indicator */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-sm)',
-                        padding: 'var(--space-xs) var(--space-md)',
-                        borderRadius: 'var(--radius-md)',
-                        background: state.useDirectMode 
-                            ? 'rgba(0, 184, 169, 0.15)' 
-                            : 'rgba(246, 91, 52, 0.15)',
-                        border: `1px solid ${state.useDirectMode ? 'var(--color-gravitee-teal)' : 'var(--color-gravitee-coral)'}`,
-                    }}>
-                        <span style={{ fontSize: '0.9rem' }}>
-                            {state.useDirectMode ? '🌐' : '🔀'}
-                        </span>
-                        <span style={{ 
-                            fontSize: '0.75rem', 
-                            fontWeight: '600',
-                            color: state.useDirectMode ? 'var(--color-gravitee-teal)' : 'var(--color-gravitee-coral)',
-                        }}>
-                            {state.useDirectMode ? 'Direct' : 'Proxy'}
-                        </span>
-                        {proxyAvailable === false && (
-                            <span 
-                                title="Proxy server unavailable"
-                                style={{ 
-                                    fontSize: '0.7rem',
-                                    color: 'var(--color-neon-orange)',
-                                    marginLeft: 'var(--space-xs)',
-                                }}
-                            >
-                                ⚠️
-                            </span>
-                        )}
-                    </div>
+                    {(() => {
+                        const modeConfig = {
+                            [REQUEST_MODES.DIRECT]:    { icon: '🌐', label: 'Direct',    bg: 'rgba(0, 184, 169, 0.15)',  border: 'var(--color-gravitee-teal)',  color: 'var(--color-gravitee-teal)' },
+                            [REQUEST_MODES.PROXY]:     { icon: '🔀', label: 'Proxy',     bg: 'rgba(246, 91, 52, 0.15)',  border: 'var(--color-gravitee-coral)', color: 'var(--color-gravitee-coral)' },
+                            [REQUEST_MODES.EXTENSION]: { icon: '🧩', label: 'Extension', bg: 'rgba(160, 120, 255, 0.15)', border: '#a078ff', color: '#a078ff' },
+                        };
+                        const m = modeConfig[state.requestMode] || modeConfig[REQUEST_MODES.DIRECT];
+                        return (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--space-sm)',
+                                padding: 'var(--space-xs) var(--space-md)',
+                                borderRadius: 'var(--radius-md)',
+                                background: m.bg,
+                                border: `1px solid ${m.border}`,
+                            }}>
+                                <span style={{ fontSize: '0.9rem' }}>{m.icon}</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: m.color }}>{m.label}</span>
+                            </div>
+                        );
+                    })()}
                 </div>
             </header>
 

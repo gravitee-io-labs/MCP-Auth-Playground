@@ -49,9 +49,8 @@ function Step3_ClientRegistration({ state, updateState, setStep, addToHistory })
         setRequest(reqData);
 
         try {
-            const data = await makeRequest(reqData, state.useDirectMode);
+            const data = await makeRequest(reqData, state.requestMode);
             setResponse(data.response);
-
             addToHistory(3, { request: reqData, response: data.response });
 
             if (data.response.status === 201 || data.response.status === 200) {

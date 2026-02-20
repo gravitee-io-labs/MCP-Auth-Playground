@@ -1,7 +1,62 @@
+import { useState } from 'react';
+import { REQUEST_MODES } from '../utils/api';
 
-function Step0_Introduction({ state, updateState, setStep, proxyAvailable }) {
-    // Determine if toggle should be disabled (proxy not available)
-    const isToggleDisabled = proxyAvailable === false;
+function Step0_Introduction({ state, updateState, setStep, proxyAvailable, extensionAvailable }) {
+    const currentMode = state.requestMode || REQUEST_MODES.DIRECT;
+    const [showExtGuide, setShowExtGuide] = useState(false);
+
+    const modes = [
+        {
+            id: REQUEST_MODES.PROXY,
+            icon: '🔀',
+            label: 'Proxy',
+            color: 'var(--color-gravitee-coral)',
+            bg: 'rgba(246, 91, 52, 0.10)',
+            border: 'rgba(246, 91, 52, 0.35)',
+            available: proxyAvailable === true,
+            checking: proxyAvailable === null,
+            description: (
+                <>
+                    Requests are routed through the <strong>proxy server</strong>, allowing access to
+                    the internal Docker network and service-name DNS resolution.
+                </>
+            ),
+            unavailableHint: 'Proxy server not detected. Run docker compose up to start it.',
+        },
+        {
+            id: REQUEST_MODES.DIRECT,
+            icon: '🌐',
+            label: 'Direct',
+            color: 'var(--color-gravitee-teal)',
+            bg: 'rgba(0, 184, 169, 0.10)',
+            border: 'rgba(0, 184, 169, 0.35)',
+            available: true,
+            checking: false,
+            description: (
+                <>
+                    Requests are sent <strong>directly from your browser</strong>. The target
+                    server must be publicly accessible and have CORS configured.
+                </>
+            ),
+        },
+        {
+            id: REQUEST_MODES.EXTENSION,
+            icon: '🧩',
+            label: 'Extension',
+            color: '#a078ff',
+            bg: 'rgba(160, 120, 255, 0.10)',
+            border: 'rgba(160, 120, 255, 0.35)',
+            available: extensionAvailable === true,
+            checking: false,
+            description: (
+                <>
+                    Requests are routed through the <strong>Local Bridge Chrome extension</strong>,
+                    which can reach <code>localhost</code> and Docker networks from the hosted app.
+                </>
+            ),
+            unavailableHint: 'extension',
+        },
+    ];
     
     return (
         <div>
@@ -84,97 +139,122 @@ function Step0_Introduction({ state, updateState, setStep, proxyAvailable }) {
                 <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--color-neon-cyan)' }}>
                     ⚙️ Configuration
                 </h3>
-                <div className="glass-card" style={{ padding: 'var(--space-lg)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-lg)' }}>
-                        <div style={{ flex: 1 }}>
-                            <h4 style={{ marginBottom: 'var(--space-xs)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                Request Mode
-                                {proxyAvailable === null && (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                        (checking proxy...)
-                                    </span>
-                                )}
-                            </h4>
-                            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', margin: 0 }}>
-                                {state.useDirectMode ? (
-                                    <>
-                                        <strong style={{ color: 'var(--color-neon-cyan)' }}>Direct Mode:</strong> Requests are sent directly from your browser. 
-                                        Services must be accessible from your machine (e.g., <code>localhost</code> URLs).
-                                    </>
-                                ) : (
-                                    <>
-                                        <strong style={{ color: 'var(--color-gravitee-coral)' }}>Proxy Mode:</strong> Requests are routed through the proxy server, 
-                                        allowing access to the internal Docker network and service-name DNS resolution.
-                                    </>
-                                )}
-                            </p>
-                            {isToggleDisabled && (
-                                <p style={{ 
-                                    color: 'var(--color-neon-orange)', 
-                                    fontSize: '0.8rem', 
-                                    marginTop: 'var(--space-sm)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--space-xs)'
-                                }}>
-                                    ⚠️ Proxy server unavailable — only Direct mode is available
-                                </p>
-                            )}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                            <span style={{ 
-                                fontSize: '0.85rem', 
-                                color: !state.useDirectMode && !isToggleDisabled ? 'var(--color-gravitee-coral)' : 'var(--color-text-muted)',
-                                fontWeight: !state.useDirectMode && !isToggleDisabled ? '600' : '400',
-                                opacity: isToggleDisabled ? 0.5 : 1,
-                            }}>
-                                Proxy
-                            </span>
+
+                <h4 style={{ marginBottom: 'var(--space-sm)' }}>Request Mode</h4>
+
+                <div style={{ display: 'grid', gap: 'var(--space-md)', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                    {modes.map((m) => {
+                        const isActive = currentMode === m.id;
+                        const isDisabled = !m.available && !m.checking;
+
+                        return (
                             <button
-                                onClick={() => !isToggleDisabled && updateState({ useDirectMode: !state.useDirectMode })}
-                                disabled={isToggleDisabled}
+                                key={m.id}
+                                onClick={() => m.available && updateState({ requestMode: m.id })}
+                                disabled={isDisabled}
                                 style={{
                                     position: 'relative',
-                                    width: '56px',
-                                    height: '28px',
-                                    borderRadius: '14px',
-                                    border: 'none',
-                                    cursor: isToggleDisabled ? 'not-allowed' : 'pointer',
-                                    opacity: isToggleDisabled ? 0.6 : 1,
-                                    background: state.useDirectMode 
-                                        ? 'var(--gradient-secondary)' 
-                                        : 'var(--gradient-primary)',
-                                    transition: 'all var(--transition-base)',
-                                    boxShadow: state.useDirectMode 
-                                        ? '0 0 12px rgba(0, 184, 169, 0.4)' 
-                                        : '0 0 12px rgba(246, 91, 52, 0.4)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 'var(--space-xs)',
+                                    padding: 'var(--space-lg)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: isActive
+                                        ? `2px solid ${m.color}`
+                                        : `1px solid ${isDisabled ? 'rgba(255,255,255,0.06)' : m.border}`,
+                                    background: isActive ? m.bg : 'rgba(255,255,255,0.02)',
+                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                    opacity: isDisabled ? 0.45 : 1,
+                                    textAlign: 'left',
+                                    color: 'inherit',
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none',
+                                    boxShadow: isActive ? `0 0 16px ${m.bg}` : 'none',
                                 }}
-                                aria-label="Toggle request mode"
                             >
-                                <span
-                                    style={{
+                                {isActive && (
+                                    <span style={{
                                         position: 'absolute',
-                                        top: '3px',
-                                        left: state.useDirectMode ? '31px' : '3px',
-                                        width: '22px',
-                                        height: '22px',
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        transition: 'left var(--transition-base)',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                    }}
-                                />
+                                        top: '8px',
+                                        right: '10px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        color: m.color,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px',
+                                    }}>
+                                        Active
+                                    </span>
+                                )}
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                                    <span style={{ fontSize: '1.5rem' }}>{m.icon}</span>
+                                    <span style={{ fontSize: '1rem', fontWeight: 600, color: m.color }}>
+                                        {m.label}
+                                    </span>
+                                    {m.checking && (
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                                            (checking…)
+                                        </span>
+                                    )}
+                                </div>
+
+                                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.82rem', margin: 0, lineHeight: 1.45 }}>
+                                    {m.description}
+                                </p>
+
+                                {isDisabled && m.unavailableHint && m.unavailableHint !== 'extension' && (
+                                    <p style={{
+                                        color: 'var(--color-neon-orange)',
+                                        fontSize: '0.78rem',
+                                        marginTop: 'var(--space-xs)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--space-xs)',
+                                    }}>
+                                        ⚠️ {m.unavailableHint}
+                                    </p>
+                                )}
+
+                                {isDisabled && m.unavailableHint === 'extension' && (
+                                    <div style={{ marginTop: 'var(--space-xs)' }}>
+                                        <p
+                                            style={{
+                                                color: 'var(--color-neon-orange)',
+                                                fontSize: '0.78rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 'var(--space-xs)',
+                                                margin: 0,
+                                            }}
+                                        >
+                                            ⚠️ Not detected.{' '}
+                                            <span
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={(e) => { e.stopPropagation(); setShowExtGuide(v => !v); }}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setShowExtGuide(v => !v); } }}
+                                                style={{ color: '#a078ff', cursor: 'pointer', textDecoration: 'underline' }}
+                                            >
+                                                {showExtGuide ? 'Hide guide' : 'How to install'}
+                                            </span>
+                                        </p>
+                                        {showExtGuide && (
+                                            <ol style={{ paddingLeft: '1.2rem', margin: '6px 0 0', display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.76rem', color: 'var(--color-text-muted)' }}>
+                                                <li>Open <strong style={{ color: 'var(--color-text-secondary)' }}>Chrome</strong> → <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: '3px', fontSize: '0.73rem' }}>chrome://extensions</code></li>
+                                                <li>Enable <strong style={{ color: 'var(--color-text-secondary)' }}>Developer mode</strong> (top-right)</li>
+                                                <li><strong style={{ color: 'var(--color-text-secondary)' }}>Load unpacked</strong> → select <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: '3px', fontSize: '0.73rem' }}>chrome-extension/</code></li>
+                                                <li><strong style={{ color: 'var(--color-text-secondary)' }}>Refresh</strong> this page</li>
+                                            </ol>
+                                        )}
+                                    </div>
+                                )}
                             </button>
-                            <span style={{ 
-                                fontSize: '0.85rem', 
-                                color: state.useDirectMode ? 'var(--color-neon-cyan)' : 'var(--color-text-muted)',
-                                fontWeight: state.useDirectMode ? '600' : '400'
-                            }}>
-                                Direct
-                            </span>
-                        </div>
-                    </div>
+                        );
+                    })}
                 </div>
+
+
             </div>
 
             <div className="step-actions" style={{ justifyContent: 'center' }}>
