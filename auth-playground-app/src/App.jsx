@@ -12,6 +12,7 @@ import Step8_MCPTools from './steps/Step8_MCPTools';
 import { checkProxyHealth, isExtensionAvailable, onExtensionReady, REQUEST_MODES } from './utils/api';
 
 const STORAGE_KEY = 'mcp-auth-playground-state';
+const IS_HOSTED = window.location.hostname === 'mcp-auth.playground.gravitee.io';
 
 const STEPS = [
     { id: 0, label: 'Intro', title: 'Introduction' },
@@ -30,7 +31,7 @@ const getInitialState = () => {
         currentStep: 0,
         mcpServerUrl: import.meta.env.VITE_DEFAULT_MCP_SERVER_URL || '',
         // Request mode: 'direct' | 'proxy' | 'extension'
-        requestMode: REQUEST_MODES.PROXY,
+        requestMode: IS_HOSTED ? REQUEST_MODES.DIRECT : REQUEST_MODES.PROXY,
         // Step 1 response
         wwwAuthenticate: null,
         resourceMetadataUrl: null,
@@ -115,8 +116,13 @@ function App() {
         }
     }, [extensionAvailable]);
 
-    // Check proxy availability on mount and periodically
+    // Check proxy availability on mount and periodically (skip on hosted version)
     useEffect(() => {
+        if (IS_HOSTED) {
+            setProxyAvailable(false);
+            return;
+        }
+
         const checkProxy = async () => {
             const available = await checkProxyHealth();
             setProxyAvailable(available);
@@ -205,6 +211,7 @@ function App() {
         addToHistory,
         proxyAvailable,
         extensionAvailable,
+        isHosted: IS_HOSTED,
     };
 
     const renderStep = () => {

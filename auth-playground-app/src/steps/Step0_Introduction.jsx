@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { REQUEST_MODES } from '../utils/api';
 
-function Step0_Introduction({ state, updateState, setStep, proxyAvailable, extensionAvailable }) {
+function Step0_Introduction({ state, updateState, setStep, proxyAvailable, extensionAvailable, isHosted }) {
     const currentMode = state.requestMode || REQUEST_MODES.DIRECT;
     const [showExtGuide, setShowExtGuide] = useState(false);
 
@@ -143,15 +143,16 @@ function Step0_Introduction({ state, updateState, setStep, proxyAvailable, exten
                 <h4 style={{ marginBottom: 'var(--space-sm)' }}>Request Mode</h4>
 
                 <div style={{ display: 'grid', gap: 'var(--space-md)', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-                    {modes.map((m) => {
+                    {modes.filter((m) => !(isHosted && m.id === REQUEST_MODES.PROXY)).map((m) => {
                         const isActive = currentMode === m.id;
                         const isDisabled = !m.available && !m.checking;
 
                         return (
-                            <button
+                            <div
                                 key={m.id}
+                                role="button"
+                                tabIndex={isDisabled ? -1 : 0}
                                 onClick={() => m.available && updateState({ requestMode: m.id })}
-                                disabled={isDisabled}
                                 style={{
                                     position: 'relative',
                                     display: 'flex',
@@ -249,7 +250,7 @@ function Step0_Introduction({ state, updateState, setStep, proxyAvailable, exten
                                         )}
                                     </div>
                                 )}
-                            </button>
+                            </div>
                         );
                     })}
                 </div>
